@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>OLA Delivery Analytics Dashboard</title>
+    <link rel="stylesheet" href="style.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body>
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loader-box">
+            <div class="loader-truck"><span class="material-icons">local_shipping</span></div>
+            <div class="loader-text">Loading Delivery Analytics...</div>
+        </div>
+    </div>
+
+    <header class="app-header">
+        <div class="container header-inner">
+            <div class="brand-icon"><span class="material-icons">local_shipping</span></div>
+            <div class="brand-text">
+                <h1>OLA Delivery Analytics</h1>
+                <div class="subtitle">Outbound Level Agreement (OLA) — Delivery Dashboard</div>
+            </div>
+        </div>
+    </header>
+
+    <main class="container main-area">
+        <!-- Client buttons -->
+        <div class="clients-row">
+            <div class="client-buttons centered">
+                <button class="client-btn active" data-client="BFRDD">BFRDD</button>
+                <button class="client-btn" data-client="PWCC">PWCC</button>
+                <button class="client-btn" data-client="NSW">NSW</button>
+            </div>
+        </div>
+
+        <!-- Report nav -->
+        <nav class="reports-row">
+            <div class="nav-buttons centered">
+                <button class="nav-btn active" data-component="monthly"><span
+                        class="material-icons">calendar_month</span><span>Monthly</span></button>
+                <button class="nav-btn" data-component="weekly"><span
+                        class="material-icons">date_range</span><span>Weekly</span></button>
+                <button class="nav-btn" data-component="yearly"><span
+                        class="material-icons">trending_up</span><span>Yearly</span></button>
+            </div>
+        </nav>
+
+        <!-- Dashboard sections -->
+        <section id="monthly" class="dashboard-section active">
+            <div class="section-header">
+                <h2>Monthly Delivery Timeliness</h2>
+                <p class="muted">Showing per-month OLA Met timeline and details for the selected client.</p>
+            </div>
+            <div class="charts-row">
+                <div class="chart-card"><canvas id="monthlyTimelinessPie"></canvas></div>
+                <div class="chart-card"><canvas id="monthlyTrendsLine"></canvas></div>
+            </div>
+            <div class="table-card">
+                <h3>Monthly Details</h3>
+                <div class="table-wrapper">
+                    <table id="monthlyTable" class="performance-table">
+                        <thead>
+                            <tr>
+                                <th>Month <span class="sort-icon">⇅</span></th>
+                                <th>Protocol <span class="sort-icon">⇅</span></th>
+                                <th>Business Date <span class="sort-icon">⇅</span></th>
+                                <th>Delivery Type <span class="sort-icon">⇅</span></th>
+                                <th>Delivery Mode <span class="sort-icon">⇅</span></th>
+                                <th>End Execution <span class="sort-icon">⇅</span></th>
+                                <th>Legal Entity <span class="sort-icon">⇅</span></th>
+                                <th>OLA_Met <span class="sort-icon">⇅</span></th>
+                            </tr>
+                        </thead>
+                        <tbody id="monthlyTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <section id="weekly" class="dashboard-section">
+            <div class="section-header">
+                <h2>Weekly Delivery Timeliness</h2>
+                <p class="muted">Showing per-week OLA Met timeline and details for the selected client.</p>
+            </div>
+            <div class="charts-row">
+                <div class="chart-card"><canvas id="weeklyTimelinessPie"></canvas></div>
+                <div class="chart-card"><canvas id="weeklyTrendsLine"></canvas></div>
+            </div>
+            <div class="table-card">
+                <h3>Weekly Details</h3>
+                <div class="table-wrapper">
+                    <table id="weeklyTable" class="performance-table">
+                        <thead>
+                            <tr>
+                                <th>Week <span class="sort-icon">⇅</span></th>
+                                <th>Protocol <span class="sort-icon">⇅</span></th>
+                                <th>Business Date <span class="sort-icon">⇅</span></th>
+                                <th>Delivery Type <span class="sort-icon">⇅</span></th>
+                                <th>Delivery Mode <span class="sort-icon">⇅</span></th>
+                                <th>End Execution <span class="sort-icon">⇅</span></th>
+                                <th>Legal Entity <span class="sort-icon">⇅</span></th>
+                                <th>OLA_Met <span class="sort-icon">⇅</span></th>
+                            </tr>
+                        </thead>
+                        <tbody id="weeklyTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <section id="yearly" class="dashboard-section">
+            <div class="section-header">
+                <h2>Yearly Delivery Analytics</h2>
+                <p class="muted">Showing per-year OLA Met timeline and details for the selected client.</p>
+            </div>
+            <div class="charts-row">
+                <div class="chart-card"><canvas id="yearlyImprovementPie"></canvas></div>
+                <div class="chart-card"><canvas id="yearlyTrendsLine"></canvas></div>
+            </div>
+            <div class="table-card">
+                <h3>Yearly Details</h3>
+                <div class="table-wrapper">
+                    <table id="yearlyTable" class="performance-table">
+                        <thead>
+                            <tr>
+                                <th>Year <span class="sort-icon">⇅</span></th>
+                                <th>Protocol <span class="sort-icon">⇅</span></th>
+                                <th>Business Date <span class="sort-icon">⇅</span></th>
+                                <th>Delivery Type <span class="sort-icon">⇅</span></th>
+                                <th>Delivery Mode <span class="sort-icon">⇅</span></th>
+                                <th>End Execution <span class="sort-icon">⇅</span></th>
+                                <th>Legal Entity <span class="sort-icon">⇅</span></th>
+                                <th>OLA_Met <span class="sort-icon">⇅</span></th>
+                            </tr>
+                        </thead>
+                        <tbody id="yearlyTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+    </main>
+    <script src="app.js"></script>
+</body>
+
+</html>
