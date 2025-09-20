@@ -150,17 +150,116 @@ function clearAllCharts() {
   charts = { monthlyPie: null, monthlyLine: null, weeklyPie: null, weeklyLine: null, yearlyPie: null, yearlyLine: null };
 }
 
+// Helper to get last N years as strings
+function getLastNYears(n) {
+  const now = new Date();
+  const years = [];
+  for (let i = 0; i < n; i++) {
+    years.unshift(String(now.getFullYear() - i));
+  }
+  return years;
+}
+
+// Helper to get all 12 months as "Jan", "Feb", etc.
+function getAllMonths() {
+  return [
+    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+  ];
+}
+
+// Helper to get week labels: "W01", "W08", ..., "W50"
+function getEvery7thWeekLabels() {
+  const weeks = [];
+  for (let w = 1; w <= 52; w += 7) {
+    weeks.push('W' + String(w).padStart(2, '0'));
+  }
+  return weeks;
+}
+
+// Map your grouped data to the fixed labels
+function mapMonthlyDataToLabels(groups) {
+  const monthLabels = getAllMonths();
+  // groups: [{label: "03-2024", ...}], label is MM-YYYY
+  const dataMap = {};
+  groups.forEach(g => {
+    // Parse month from label
+    const [mm, yyyy] = g.label.split('-');
+    dataMap[mm] = g.items.map(i => i.OLA_Met === 'Yes' ? 1 : 0).reduce((a, b) => a + b, 0) / g.items.length;
+  });
+  // Map to Jan, Feb, ... order
+  return monthLabels.map((m, idx) => {
+    const mm = String(idx + 1).padStart(2, '0');
+    return dataMap[mm] !== undefined ? dataMap[mm] : null;
+  });
+}
+
+function mapWeeklyDataToLabels(groups) {
+  const weekLabels = getEvery7thWeekLabels();
+  // groups: [{label: "2024-W07", ...}]
+  const dataMap = {};
+  groups.forEach(g => {
+    // Parse week from label
+    const parts = g.label.split('-W');
+    if (parts.length === 2) {
+      dataMap['W' + parts[1]] = g.items.map(i => i.OLA_Met === 'Yes' ? 1 : 0).reduce((a, b) => a + b, 0) / g.items.length;
+    }
+  });
+  return weekLabels.map(w => dataMap[w] !== undefined ? dataMap[w] : null);
+}
+
+function mapYearlyDataToLabels(groups) {
+  const yearLabels = getLastNYears(5);
+  const dataMap = {};
+  groups.forEach(g => {
+    dataMap[g.label] = g.items.map(i => i.OLA_Met === 'Yes' ? 1 : 0).reduce((a, b) => a + b, 0) / g.items.length;
+  });
+  return yearLabels.map(y => dataMap[y] !== undefined ? dataMap[y] : null);
+}
+
+function getAvailableYears(records) {
+  // Returns sorted array of unique years as strings
+  return Array.from(new Set(records.map(r => r.BusinessYear))).sort();
+}
+
+function populateYearSelectors(records) {
+  const years = getAvailableYears(records);
+  const monthlySelect = document.getElementById('monthlyYearSelect');
+  const weeklySelect = document.getElementById('weeklyYearSelect');
+  // Preserve current selection
+  const monthlyPrev = monthlySelect ? monthlySelect.value : null;
+  const weeklyPrev = weeklySelect ? weeklySelect.value : null;
+  if (monthlySelect) {
+    monthlySelect.innerHTML = years.map(y => `<option value="${y}">${y}</option>`).join('');
+    // Restore previous selection if possible
+    if (monthlyPrev && years.includes(monthlyPrev)) monthlySelect.value = monthlyPrev;
+  }
+  if (weeklySelect) {
+    weeklySelect.innerHTML = years.map(y => `<option value="${y}">${y}</option>`).join('');
+    // Restore previous selection if possible
+    if (weeklyPrev && years.includes(weeklyPrev)) weeklySelect.value = weeklyPrev;
+  }
+}
+
 // ------------------------------ Render functions (only populate active section) ------------------------------
 function renderMonthly(records) {
-  const groups = groupMonthly(records);
-  const trend = buildTrend(groups);
-  const yesno = computeYesNo(records);
+  // const groups = groupMonthly(records);
+  // // const trend = buildTrend(groups);
+  // const yesno = computeYesNo(records);
+
+  // Get selected year for chart
+  const yearSelect = document.getElementById('monthlyYearSelect');
+  const selectedYear = yearSelect ? yearSelect.value : null;
+  // Filter for chart only
+  const chartRecords = selectedYear ? records.filter(r => r.BusinessYear === selectedYear) : records;
+  const groups = groupMonthly(chartRecords);
+  const yesno = computeYesNo(chartRecords);
 
   // Pie (OLA Met vs Not Met)
   const pieCtx = document.getElementById('monthlyTimelinessPie').getContext('2d');
   destroyChart(charts.monthlyPie);
   charts.monthlyPie = new Chart(pieCtx, {
-    type: 'doughnut',
+    type: 'pie',
     data: { labels: yesno.labels, datasets: [{ data: yesno.values, backgroundColor: ['#10B981', '#EF4444'] }] },
     options: { responsive: true, plugins: { legend: { labels: { color: 'white' } } } }
   });
@@ -170,13 +269,26 @@ function renderMonthly(records) {
   destroyChart(charts.monthlyLine);
   charts.monthlyLine = new Chart(lineCtx, {
     type: 'line',
-    data: { labels: trend.labels, datasets: [{ label: 'OLA Met vs NotMet', data: groups.map(g => g.items.map(i => i.OLA_Met === 'Yes' ? 1 : 0).reduce((a, b) => a + b, 0) / g.items.length), borderColor: '#10B981', fill: false }] },
+    data: {
+      labels: getAllMonths(),
+      datasets: [{
+        label: 'OLA Met vs NotMet',
+        // data: groups.map(g => g.items.map(i => i.OLA_Met === 'Yes' ? 1 : 0).reduce((a, b) => a + b, 0) / g.items.length),
+        data: mapMonthlyDataToLabels(groups),
+        borderColor: '#10B981',
+        fill: false,
+        spanGaps: true // Connect points across nulls
+      }]
+    },
     options: {
-      responsive: true, scales: {
+      responsive: true,
+      // elements: { line: { tension: 0.4 } }, // Smooth line
+      scales: {
         x: { ticks: { color: 'white', maxRotation: 45, minRotation: 30, autoSkip: false } },
         // Add rotation for x-axis labels (see below)
         y: { min: 0, max: 1, ticks: { color: 'white', callback: v => v === 1 ? 'Yes' : (v === 0 ? 'No' : '') } }
-      }, plugins: { legend: { labels: { color: 'white' } } }
+      },
+      plugins: { legend: { labels: { color: 'white' } } }
     }
   });
 
@@ -184,9 +296,25 @@ function renderMonthly(records) {
 }
 
 function renderWeekly(records) {
-  const groups = groupWeekly(records);
-  const trend = buildTrend(groups);
-  const yesno = computeYesNo(records);
+  // const groups = groupWeekly(records);
+  // // const trend = buildTrend(groups);
+  // const yesno = computeYesNo(records);
+
+  // Get selected year for chart
+  const yearSelect = document.getElementById('weeklyYearSelect');
+  const selectedYear = yearSelect ? yearSelect.value : null;
+  // Filter for chart only
+  const chartRecords = selectedYear ? records.filter(r => r.BusinessYear === selectedYear) : records;
+  const groups = groupWeekly(chartRecords);
+  const yesno = computeYesNo(chartRecords);
+
+  // Get all week labels present in the data, sorted
+  const weekLabels = groups.map(g => g.label);
+
+  // Map data to those week labels
+  const data = groups.map(g =>
+    g.items.map(i => i.OLA_Met === 'Yes' ? 1 : 0).reduce((a, b) => a + b, 0) / g.items.length
+  );
 
   const pieCtx = document.getElementById('weeklyTimelinessPie').getContext('2d');
   destroyChart(charts.weeklyPie);
@@ -200,12 +328,26 @@ function renderWeekly(records) {
   destroyChart(charts.weeklyLine);
   charts.weeklyLine = new Chart(lineCtx, {
     type: 'line',
-    data: { labels: trend.labels, datasets: [{ label: 'OLA Met vs NotMet', data: groups.map(g => g.items.map(i => i.OLA_Met === 'Yes' ? 1 : 0).reduce((a, b) => a + b, 0) / g.items.length), borderColor: '#10B981', fill: false }] },
+    data: {
+      labels: weekLabels,
+      datasets: [{
+        label: 'OLA Met vs NotMet',
+        // data: groups.map(g => g.items.map(i => i.OLA_Met === 'Yes' ? 1 : 0).reduce((a, b) => a + b, 0) / g.items.length), 
+        data: data,
+        borderColor: '#10B981',
+        fill: false,
+        spanGaps: true // Connect points across nulls
+      }]
+    },
     options: {
-      responsive: true, scales: {
+      responsive: true,
+      // elements: { line: { stepped: true }, point: { radius: 5 } }, // Stepped line, bigger points
+      scales: {
         x: { ticks: { color: 'white', maxRotation: 45, minRotation: 30, autoSkip: false } },
-        y: { min: 0, max: 1, ticks: { color: 'white', callback: v => v === 1 ? 'Yes' : 'No' } }
-      }, plugins: { legend: { labels: { color: 'white' } } }
+        y: { min: 0, max: 1, ticks: { color: 'white', callback: v => v === 1 ? 'Yes' : (v === 0 ? 'No' : '') } }
+      }
+      ,
+      plugins: { legend: { labels: { color: 'white' } } }
     }
   });
 
@@ -214,7 +356,7 @@ function renderWeekly(records) {
 
 function renderYearly(records) {
   const groups = groupYearly(records);
-  const trend = buildTrend(groups);
+  // const trend = buildTrend(groups);
   const yesno = computeYesNo(records);
 
   const pieCtx = document.getElementById('yearlyImprovementPie').getContext('2d');
@@ -229,12 +371,22 @@ function renderYearly(records) {
   destroyChart(charts.yearlyLine);
   charts.yearlyLine = new Chart(lineCtx, {
     type: 'line',
-    data: { labels: trend.labels, datasets: [{ label: 'OLA Met vs NotMet', data: groups.map(g => g.items.map(i => i.OLA_Met === 'Yes' ? 1 : 0).reduce((a, b) => a + b, 0) / g.items.length), borderColor: '#10B981', fill: false }] },
+    data: {
+      labels: getLastNYears(5),
+      datasets: [{
+        label: 'OLA Met vs NotMet',
+        // data: groups.map(g => g.items.map(i => i.OLA_Met === 'Yes' ? 1 : 0).reduce((a, b) => a + b, 0) / g.items.length), 
+        data: mapYearlyDataToLabels(groups),
+        borderColor: '#10B981', fill: false
+      }]
+    },
     options: {
-      responsive: true, scales: {
+      responsive: true,
+      scales: {
         x: { ticks: { color: 'white', maxRotation: 45, minRotation: 30, autoSkip: false } },
         y: { min: 0, max: 1, ticks: { color: 'white', callback: v => v === 1 ? 'Yes' : (v === 0 ? 'No' : '') } }
-      }, plugins: { legend: { labels: { color: 'white' } } }
+      },
+      plugins: { legend: { labels: { color: 'white' } } }
     }
   });
 
@@ -357,6 +509,9 @@ function rebuild() {
   const raw = clientsData[currentClient] || [];
   const normalized = raw.map(normalizeRaw);
 
+  // Populate year selectors
+  populateYearSelectors(normalized);
+
   const comp = activeComponent();
   // hide other sections, show only active
   showOnlySection(comp);
@@ -409,6 +564,10 @@ window.exportClientRaw = function () {
 document.addEventListener('DOMContentLoaded', () => {
   initClients();
   initNav();
+  const monthlySelect = document.getElementById('monthlyYearSelect');
+  const weeklySelect = document.getElementById('weeklyYearSelect');
+  if (monthlySelect) monthlySelect.addEventListener('change', () => rebuild());
+  if (weeklySelect) weeklySelect.addEventListener('change', () => rebuild());
   // pre-attach sorting binding for table headers (no-op until rows exist)
   ['monthlyTable', 'weeklyTable', 'yearlyTable'].forEach(id => {
     const t = document.getElementById(id);
