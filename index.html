@@ -55,7 +55,9 @@
         <section id="monthly" class="dashboard-section active">
             <div class="section-header">
                 <h2>Monthly Delivery Timeliness</h2>
-                <p class="muted">Showing per-month OLA Met timeline and details for the selected client.</p>
+                <p class="muted-subtitle">Showing per-month OLA Met timeline and details for the selected client.</p>
+                <label for="monthlyYearSelect" class="muted" style="margin-right:8px;">Year :</label>
+                <select id="monthlyYearSelect"></select>
             </div>
             <div class="charts-row">
                 <div class="chart-card"><canvas id="monthlyTimelinessPie"></canvas></div>
@@ -87,6 +89,8 @@
             <div class="section-header">
                 <h2>Weekly Delivery Timeliness</h2>
                 <p class="muted">Showing per-week OLA Met timeline and details for the selected client.</p>
+                <label for="weeklyYearSelect" class="muted" style="margin-right:8px;">Year :</label>
+                <select id="weeklyYearSelect"></select>
             </div>
             <div class="charts-row">
                 <div class="chart-card"><canvas id="weeklyTimelinessPie"></canvas></div>
@@ -118,6 +122,8 @@
             <div class="section-header">
                 <h2>Yearly Delivery Analytics</h2>
                 <p class="muted">Showing per-year OLA Met timeline and details for the selected client.</p>
+                <!-- <label for="yearlyYearSelect" class="muted" style="margin-right:8px;">Year:</label>
+                <select id="yearlyYearSelect"></select> -->
             </div>
             <div class="charts-row">
                 <div class="chart-card"><canvas id="yearlyImprovementPie"></canvas></div>

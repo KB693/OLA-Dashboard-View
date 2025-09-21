@@ -65,13 +65,18 @@ body {
 
 .brand-text h1 {
   margin: 0;
-  font-size: 24px;
-  font-weight: 700
+  font-size: 38px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  text-align: center;
+  line-height: 1.2;
 }
 
 .subtitle {
   color: var(--muted);
-  font-size: 14px
+  font-size: 18px;
+  text-align: center;
+  margin-top: 6px;
 }
 
 /* loading overlay */
@@ -114,6 +119,11 @@ body {
   color: var(--muted)
 }
 
+.weeklyYearSelect,
+.monthlyYearSelect {
+  margin-right: 0px;
+}
+
 /* buttons */
 .clients-row,
 .reports-row {
@@ -126,19 +136,48 @@ body {
   gap: 14px
 }
 
-.client-btn,
-.nav-btn {
+.client-buttons,
+.nav-buttons {
+  width: 100%;
+  justify-content: center;
+  gap: 24px;
+  /* More space between buttons */
+}
+
+.client-btn {
   background: var(--glass);
   border: 1px solid var(--glass-border);
   color: var(--text);
+  min-width: 160px;
   padding: 10px 16px;
-  border-radius: 10px;
+  font-size: 25px;
+  border-radius: 12px;
   font-weight: 600;
   display: flex;
   align-items: center;
   gap: 8px;
   cursor: pointer;
-  transition: all .18s ease
+  transition: all .18s ease;
+  justify-content: center;
+  text-align: center;
+}
+
+.nav-btn {
+  background: var(--glass);
+  border: 1px solid var(--glass-border);
+  color: var(--text);
+  min-width: 250px;
+  padding: 10px 16px;
+  font-size: 18px;
+  border-radius: 12px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: all .18s ease;
+  justify-content: center;
+  text-align: center;
 }
 
 .client-btn:hover,
@@ -169,13 +208,20 @@ body {
 
 .section-header h2 {
   margin: 0;
-  font-size: 20px;
+  font-size: 22px;
   font-weight: 600
 }
 
 .muted {
   color: var(--muted);
-  font-size: 13px
+  font-size: 14px
+}
+
+.muted-subtitle {
+  color: var(--muted);
+  font-size: 12px;
+  margin-top: 4px;
+  margin-bottom: 8px;
 }
 
 /* charts */
@@ -251,6 +297,23 @@ body {
   font-size: 11px;
   margin-left: 6px;
   color: var(--muted)
+}
+
+/* select dropdown */
+.section-header select {
+  margin-left: -4px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  border: 1px solid var(--glass-border);
+  background: var(--card);
+  color: var(--text);
+}
+
+.container.main-area {
+  max-width: 1400px;
+  /* Wider container */
+  padding-left: 24px;
+  padding-right: 24px;
 }
 
 /* responsive */
